@@ -1,0 +1,18 @@
+# Build outputs
+build/
+devel/
+install/
+log/
+logs/
+
+# Colcon / catkin / CMake
+cmake-build-*/
+*.o
+*.so
+*.a
+*.pyc
+__pycache__/
+
+
+# Editors / OS
+.DS_Store
