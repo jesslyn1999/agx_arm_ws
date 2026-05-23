@@ -1,0 +1,40 @@
+<launch>
+  <!-- ── Robot selection ── -->
+  <arg name="arm_type"       default="piper"      description="Arm type: piper, piper_x, piper_l, piper_h, nero." />
+  <arg name="effector_type"  default="none"        description="Effector: none, agx_gripper, revo2." />
+  <arg name="revo2_type"     default="left"        description="Revo2 side (used when effector_type is revo2)." />
+  <arg name="tcp_offset"     default="[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]" description="TCP offset [x,y,z,rx,ry,rz]." />
+  <arg name="namespace"      default=""            description="ROS namespace for this arm instance." />
+
+  <!-- ── UI ── -->
+  <arg name="use_rviz"       default="true"        description="Start RViz." />
+
+  <!-- ── Simulation vs mock hardware ── -->
+  <arg name="use_simulation" default="false"       description="Start Gazebo Harmonic simulation instead of mock ros2_control." />
+  <arg name="gazebo_gui"     default="true"        description="Start Gazebo with GUI (only when use_simulation:=true)." />
+
+  <!-- ── Mock hardware path (existing demo.launch.py) ── -->
+  <group unless="$(var use_simulation)">
+    <include file="$(find-pkg-share agx_arm_moveit)/launch/demo.launch.py">
+      <arg name="arm_type"       value="$(var arm_type)" />
+      <arg name="effector_type"  value="$(var effector_type)" />
+      <arg name="revo2_type"     value="$(var revo2_type)" />
+      <arg name="tcp_offset"     value="$(var tcp_offset)" />
+      <arg name="namespace"      value="$(var namespace)" />
+      <arg name="use_rviz"       value="$(var use_rviz)" />
+    </include>
+  </group>
+
+  <!-- ── Gazebo Harmonic simulation path ── -->
+  <group if="$(var use_simulation)">
+    <include file="$(find-pkg-share agx_arm_moveit)/launch/gazebo_bringup.launch.py">
+      <arg name="arm_type"       value="$(var arm_type)" />
+      <arg name="effector_type"  value="$(var effector_type)" />
+      <arg name="revo2_type"     value="$(var revo2_type)" />
+      <arg name="tcp_offset"     value="$(var tcp_offset)" />
+      <arg name="namespace"      value="$(var namespace)" />
+      <arg name="use_rviz"       value="$(var use_rviz)" />
+      <arg name="gazebo_gui"     value="$(var gazebo_gui)" />
+    </include>
+  </group>
+</launch>
