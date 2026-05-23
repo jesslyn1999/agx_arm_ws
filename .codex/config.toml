@@ -1,0 +1,38 @@
+# AGX arm MCP server — started automatically by Codex CLI.
+# Uses a wrapper script to source the ROS 2 workspace first.
+
+[mcp_servers.agx_arm]
+command = "bash"
+args = [".codex/run_mcp_server.sh"]
+startup_timeout_sec = 15
+tool_timeout_sec = 60
+
+[mcp_servers.agx_arm.tools.get_joint_states]
+approval_mode = "approve"
+
+[mcp_servers.agx_arm.tools.get_end_effector_pose]
+approval_mode = "approve"
+
+[mcp_servers.agx_arm.tools.move_joint]
+approval_mode = "approve"
+
+[mcp_servers.agx_arm.tools.move_all_joints]
+approval_mode = "approve"
+
+[mcp_servers.agx_arm.tools.open_gripper]
+approval_mode = "approve"
+
+[mcp_servers.agx_arm.tools.close_gripper]
+approval_mode = "approve"
+
+[mcp_servers.agx_arm.tools.move_gripper]
+approval_mode = "approve"
+
+[mcp_servers.agx_arm.tools.list_topics]
+approval_mode = "approve"
+
+[mcp_servers.agx_arm.tools.list_nodes]
+approval_mode = "approve"
+
+[mcp_servers.agx_arm.tools.list_actions]
+approval_mode = "approve"
