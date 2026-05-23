@@ -31,7 +31,9 @@ from openai import OpenAI
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
+TOOLS_DIR = Path(__file__).resolve().parent
 ENV_FILE = ROOT_DIR / ".env"
+DEFAULT_PROMPT_FILE = TOOLS_DIR / "Prompt.md"
 
 DEFAULT_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 DEFAULT_MODEL = "qwen3-omni-flash"
@@ -39,6 +41,15 @@ INPUT_SAMPLE_RATE = 16_000
 OUTPUT_SAMPLE_RATE = 24_000
 CHANNELS = 1
 SAMPLE_WIDTH_BYTES = 2
+
+
+def load_prompt(path: Path) -> str:
+    if not path.exists():
+        raise FileNotFoundError(f"Prompt file not found: {path}")
+    prompt = path.read_text().strip()
+    if not prompt:
+        raise ValueError(f"Prompt file is empty: {path}")
+    return prompt
 
 
 def load_dotenv(path: Path = ENV_FILE) -> None:
@@ -326,6 +337,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--model", default=os.getenv("DASHSCOPE_MODEL", DEFAULT_MODEL), help="Model name.")
     parser.add_argument("--voice", default="Ethan", help="Output voice, for example Ethan, Tina, Cherry.")
+    parser.add_argument("--prompt-file", type=Path, default=DEFAULT_PROMPT_FILE, help="System prompt markdown file.")
     parser.add_argument("--manual", action="store_true", help="Use Enter-to-record mode instead of automatic voice detection.")
     parser.add_argument("--duration-sec", type=int, default=4, help="Manual-mode recording duration in whole seconds.")
     parser.add_argument("--min-record-sec", type=float, default=0.7, help="Minimum automatic recording length after speech starts.")
@@ -338,11 +350,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--keep-output-audio", action="store_true", help="Keep the last assistant PCM file in /tmp for debugging.")
     parser.add_argument(
         "--user-prompt",
-        default=(
-            "请听这段语音并直接回答。你是面向老年人的机器人语音助手，"
-            "回答要简短、清楚、礼貌。不要控制机械臂。"
-        ),
-        help="Text instruction sent together with every audio clip.",
+        default="请听这段语音，并按照系统提示词中的服务流程继续对话。",
+        help="Short text instruction sent together with every audio clip.",
     )
     parser.add_argument("--verbose", action="store_true", help="Print usage information.")
     return parser.parse_args()
@@ -365,9 +374,10 @@ def main() -> int:
         print("Error: VAD settings must be positive.", file=sys.stderr)
         return 1
 
+    system_prompt = load_prompt(args.prompt_file)
     http_client = httpx.Client(proxy=None, trust_env=False)
     client = OpenAI(api_key=api_key, base_url=args.base_url, http_client=http_client)
-    messages: list[dict[str, Any]] = []
+    messages: list[dict[str, Any]] = [{"role": "system", "content": system_prompt}]
 
     mode = "manual" if args.manual else "automatic"
     print(f"Qwen3-Omni-Flash voice MVP started in {mode} mode. Press Ctrl+C to stop.")
