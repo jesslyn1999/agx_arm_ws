@@ -3,3 +3,7 @@ repositories:
     type: git
     url: https://github.com/agilexrobotics/agx_arm_ros.git
     version: ros2
+  agx_description/agx_arm_urdf:
+    type: git
+    url: https://github.com/agilexrobotics/agx_arm_urdf.git
+    version: main
