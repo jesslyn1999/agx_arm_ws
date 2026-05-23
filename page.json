@@ -1,0 +1,45 @@
+{
+  "when": "user want what",
+  "stageElements": [
+    {
+      "children": [
+        {
+          "height": 479.8,
+          "id": "image-1779553160914-2206na",
+          "parentId": "__device_container_group__",
+          "rotation": 0,
+          "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/9d5e1617_20260523160116_image.png",
+          "type": "image",
+          "width": 799.7,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 376.2,
+          "id": "image-1779553203019",
+          "parentId": "__device_container_group__",
+          "rotation": 0,
+          "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/ab76117e_20260523162014_image.png",
+          "type": "image",
+          "width": 391.9,
+          "x": 204,
+          "y": 75.9
+        }
+      ],
+      "cornerRadius": 0,
+      "fill": "#ffffff",
+      "height": 480,
+      "id": "__device_container_group__",
+      "stroke": "#ffffff",
+      "strokeWidth": 0,
+      "type": "group",
+      "width": 800,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "stageSize": {
+    "width": 1054,
+    "height": 545
+  }
+}
