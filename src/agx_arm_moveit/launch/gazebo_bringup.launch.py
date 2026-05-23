@@ -115,7 +115,7 @@ def _launch_setup(context, *args, **kwargs):
     )
 
     # ── Gazebo Harmonic ──
-    gz_args = f"-r -v 3 {world_file}"
+    gz_args = f"-r -v 3 --render-engine ogre {world_file}"
     if gazebo_gui != "true":
         gz_args = f"-s {gz_args}"
 
