@@ -1,19 +1,41 @@
-# Acemate / AgileX Robot Arm Workspace
+# 嗨递老 / AgileX NERO Robot Arm Workspace
 
 This workspace is based on the ROS 2 branch of:
 
 https://github.com/agilexrobotics/agx_arm_ros
 
-It records the current ROS 2 integration for the AgileX arm and the product
-prototype built around it. The real hardware setup uses CAN communication and a
-real AgileX gripper, but this computer currently does not have the CAN hardware
-communication path available. Real-arm bringup must be done on a machine with
-the USB-CAN adapter connected and configured.
+The current prototype uses the AgileX NERO arm and the ROS 2 driver from
+`agx_arm_ros` to perform physical service gestures for the **嗨递老** hotpot
+restaurant concept. The real arm communicates through CAN. This computer keeps
+the ROS workspace and product documents, but it currently does not have the CAN
+hardware communication path available. Real-arm bringup must be done on a
+machine with the USB-CAN adapter connected and configured.
 
-The current local workspace is:
+Current local workspace:
 
 ```bash
 /home/yuuki/Documents/ROBOT/agx_arm_ws
+```
+
+## Product Vision
+
+**嗨递老** is a hotpot service concept inspired by Haidilao's well-known culture
+of extreme service: birthday celebration, attentive care, and a little joyful
+awkwardness at the table. The project adds a hard-tech layer to that service
+culture: a robot arm that can physically lower, extend, and present the ordering
+screen, birthday interaction, and human care to elderly users and visually
+impaired users.
+
+The core industry insight is simple: many restaurant robots already have screens,
+but the screen is often too far from the actual guest. For older diners,
+wheelchair users, and low-vision users, that distance becomes a real barrier.
+The arm is not decoration here. It is a physical extension of service: it brings
+the big-font menu and the celebration closer to the person who needs it.
+
+The product document is:
+
+```text
+嗨递老_产品技术文档.md
 ```
 
 ## Current Status
@@ -28,83 +50,103 @@ The current local workspace is:
   - `agx_arm_description`
   - `agx_arm_moveit`
   - `agx_arm_msgs`
-- Real hardware setup target: AgileX arm with AgileX gripper.
+- Target arm model: AgileX `NERO`.
+- End effector target: AgileX gripper, configured with `effector_type:=agx_gripper`.
 - Real hardware communication: CAN, tested in the friend's hardware environment.
-- Current computer status: ROS workspace is available, but CAN communication is
-  not available until a USB-CAN adapter is connected and configured.
+- Current computer status: software workspace is available, but real robot
+  feedback and motion require USB-CAN hardware.
 
-## Product Feature Summary
+## MVP Scope
 
-The product document is:
+The MVP intentionally avoids fragile features and focuses on a controlled,
+demonstrable service loop.
+
+### Screen
+
+- Provides a basic menu for normal users.
+- Provides a large-font elderly-friendly menu.
+- Menu switching is controlled by the upper computer.
+- The screen focuses on showing dishes clearly; voice interaction is not included
+  in the MVP.
+
+### NERO Arm
+
+- Uses `agx_arm_ros` with `arm_type:=nero`.
+- Uses CAN communication in the hardware environment.
+- Moves to a fixed, comfortable 3D reference pose for presenting the screen.
+- Executes a birthday rhythm motion synchronized with Haidilao-style birthday
+  music.
+- Motion should favor stability and safety over visual exaggeration.
+
+### Upper Computer
+
+- Provides start/stop control for arm actions.
+- Triggers menu switching on the screen.
+- Coordinates the birthday mode: start music, switch celebration screen, start
+  arm rhythm motion, and stop/reset after the sequence.
+
+### Voice Module
+
+- Not included in the MVP.
+- Voice interaction is reserved for the advanced plan.
+
+## Advanced Plan
+
+The advanced plan adds perception and richer interaction after the MVP is stable.
+
+### Screen
+
+- Adds better visual filters and design language for dish photos.
+- Keeps the menu focused on dishes instead of crowding the screen with controls.
+- Supports voice-triggered switching between normal menu and large-font menu.
+
+### NERO Arm
+
+- Adds camera-based human-position detection.
+- Adjusts the arm posture based on the detected user position, so elderly users
+  can see the screen without leaning forward or asking for help.
+- Keeps preset safe motion envelopes instead of fully free-form arm movement.
+
+### Voice Module
+
+- Adds voice commands for menu switching and simple mode selection.
+- Example commands:
+  - switch to elderly menu
+  - return to normal menu
+  - start birthday mode
+  - stop arm motion
+
+### Perception
+
+- Uses a camera to estimate user position or upper-body location.
+- The output should map to a small set of safe arm presets, not arbitrary IK
+  targets, to reduce hardware risk during demos.
+
+## System Architecture
 
 ```text
-食光破壁者_产品技术文档.md
-```
+Upper Computer
+  ├── ROS 2 environment
+  ├── agx_arm_ros driver
+  ├── arm action start/stop control
+  ├── screen menu switching control
+  └── birthday sequence coordinator
 
-Product name:
+Hardware Layer
+  ├── AgileX NERO arm
+  ├── AgileX gripper
+  ├── CAN adapter and can0 interface
+  └── ordering display screen
 
-```text
-食光破壁者（Barrier Breaker）
-```
+MVP Interaction Layer
+  ├── basic menu
+  ├── elderly large-font menu
+  └── birthday celebration screen
 
-Positioning:
-
-- Track: accessibility technology / embodied AI application.
-- Target users: elderly people over 65, wheelchair users, and visually impaired
-  users.
-- Core idea: instead of forcing users to adapt to restaurant digital systems,
-  the robot actively adapts the ordering interface to the user.
-
-Main functions:
-
-1. Active approach and adaptive screen height
-
-   A staff member or user calls the robot from an H5 interface. The mobile base
-   approaches the table, the camera estimates the user's upper-body or
-   wheelchair height, and the arm moves the screen down to a comfortable viewing
-   height. The screen can tilt forward to improve readability.
-
-2. Multimodal accessible ordering
-
-   After the arm reaches the target position, the screen enters an elderly-user
-   mode with large text, high contrast, and simplified layout. The user can order
-   through voice or touch. The H5 page uses speech input and text-to-speech for
-   accessible interaction.
-
-3. Health-restriction based menu recommendation
-
-   The user can say restrictions such as "I have high blood pressure" or "I
-   cannot eat sweet food". The backend calls an LLM API, such as DeepSeek or GPT,
-   to extract dietary restrictions, then hides or disables unsuitable dishes and
-   highlights safer recommendations. This is the product's key differentiated
-   feature.
-
-4. Birthday mode
-
-   A birthday mode can play local birthday music, show a celebration animation,
-   trigger a pre-recorded arm dance trajectory, rotate the camera toward the
-   customer, take a countdown photo, and show a QR code for downloading the
-   photo.
-
-5. H5 and robot collaboration
-
-   The H5 page handles voice input, TTS, local audio, large-font menu UI, and
-   remote operation controls. The central service uses Python Flask and
-   WebSocket to exchange JSON commands with the robot-control side.
-
-6. Hardware and software architecture
-
-   The prototype combines an AgileX mobile base, a 6-DOF arm, an electronic
-   screen, an RDK X5 or laptop-side central service, a USB camera, YOLOv8-based
-   user detection, LLM-based menu filtering, and a preset arm trajectory library.
-
-Important JSON command examples from the product design:
-
-```json
-{"action": "approach_and_lower", "target_height": 0.6, "tilt_angle": 15}
-{"action": "filter_menu", "restrictions": ["高盐", "高糖"], "user_input": "我有高血压"}
-{"action": "start_birthday_dance", "song": "happy_birthday.mp3"}
-{"action": "capture_photo", "countdown": 3}
+Advanced Interaction Layer
+  ├── camera-based user position detection
+  ├── voice menu switching
+  └── visually optimized dish presentation
 ```
 
 ## Package Overview
@@ -143,28 +185,21 @@ Useful services:
 
 ### `agx_arm_moveit`
 
-MoveIt2 configuration package. It supports real hardware operation with RViz
-following the actual feedback from `/feedback/joint_states`.
-
-For real hardware, use:
+MoveIt2 configuration package. For real hardware, RViz should follow the actual
+feedback from `/feedback/joint_states`.
 
 ```bash
 follow:=true
 ```
 
-The combined launch file below already uses this default.
-
 ### `agx_arm_description`
 
-URDF, xacro, and mesh files for the supported AgileX arm variants.
+URDF, xacro, and mesh files for the supported AgileX arm variants. The current
+prototype targets:
 
-Supported arm types include:
-
-- `piper`
-- `piper_h`
-- `piper_l`
-- `piper_x`
-- `nero`
+```text
+nero
+```
 
 ### `agx_arm_msgs`
 
@@ -172,8 +207,8 @@ Custom ROS messages for arm, gripper, and hand status/control.
 
 ## Hardware Notes
 
-The real arm communicates through a CAN interface. The expected interface name
-in the hardware environment is:
+The real arm communicates through CAN. In the hardware environment, the expected
+CAN interface name is:
 
 ```bash
 can0
@@ -197,21 +232,19 @@ verification, but do not expect real robot feedback without CAN.
 
 ### 1. Source ROS and the workspace
 
-Open a terminal:
-
 ```bash
 cd /home/yuuki/Documents/ROBOT/agx_arm_ws
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 ```
 
-Verify that the packages are visible:
+Verify packages:
 
 ```bash
 ros2 pkg list | grep agx_arm
 ```
 
-Expected packages include:
+Expected packages:
 
 ```text
 agx_arm_ctrl
@@ -236,17 +269,7 @@ ip -br link show type can
 ip -details link show can0
 ```
 
-If multiple CAN adapters are connected, the script may ask for a USB hardware
-address. In that case, follow the address printed by the script and rerun it in
-the form:
-
-```bash
-bash can_activate.sh can0 1000000 <usb-bus-address>
-```
-
-### 3. Launch Real Arm + AgileX Gripper + MoveIt
-
-Use this as the normal bringup command for the current hardware:
+### 3. Launch Real NERO Arm + AgileX Gripper + MoveIt
 
 ```bash
 cd /home/yuuki/Documents/ROBOT/agx_arm_ws
@@ -255,14 +278,11 @@ source install/setup.bash
 
 ros2 launch agx_arm_ctrl start_single_agx_arm_moveit.launch.py \
   can_port:=can0 \
-  arm_type:=piper \
+  arm_type:=nero \
   effector_type:=agx_gripper \
   tcp_offset:='[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]' \
   speed_percent:=20
 ```
-
-If the physical arm model is not `piper`, replace `arm_type:=piper` with the
-correct model, such as `piper_x` or `nero`.
 
 Start with a low `speed_percent` for real hardware testing. Increase it only
 after feedback and motion behavior are confirmed.
@@ -302,10 +322,11 @@ The system is considered brought up correctly when all of the following pass:
    ros2 topic echo /feedback/gripper_status --once
    ```
 
-6. RViz model follows the real robot state.
+6. The NERO arm can move to the fixed comfortable screen-presentation pose.
 
-7. A small MoveIt `Plan & Execute` test moves the real arm smoothly and stops at
-   the expected target.
+7. Birthday rhythm motion can start, run, and stop from the upper computer.
+
+8. The screen can switch between basic menu and elderly large-font menu.
 
 ## Safety Rules
 
@@ -313,6 +334,8 @@ The system is considered brought up correctly when all of the following pass:
 - Use low speed for first bringup or after changing parameters.
 - Do not command positions outside the configured joint limits.
 - Keep access to emergency stop during real hardware testing.
+- For the MVP, prefer fixed safe poses and pre-recorded rhythm trajectories over
+  free-form motion.
 - If feedback is missing or unstable, stop and fix CAN/driver status before
   sending motion commands.
 
@@ -329,4 +352,3 @@ source install/setup.bash
 
 If Python/ROS environment issues appear, make sure Conda is not active before
 building.
-
