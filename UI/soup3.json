@@ -1,0 +1,60 @@
+{
+  "when": "user want what",
+  "stageElements": [
+    {
+      "children": [
+        {
+          "height": 480,
+          "id": "image-1779559296808-o21y3z",
+          "parentId": "__device_container_group__",
+          "rotation": 0,
+          "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/846df41f_20260523175318_image.png",
+          "type": "image",
+          "width": 800,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 312.1,
+          "id": "image-1779559313775-revhwk",
+          "parentId": "__device_container_group__",
+          "rotation": 0,
+          "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/44baad0d_20260523175708_image.png",
+          "type": "image",
+          "width": 312.1,
+          "x": 112.6,
+          "y": 84
+        },
+        {
+          "color": "#000000",
+          "fontFamily": "Montserrat",
+          "fontSize": 32,
+          "fontStyle": "bold",
+          "height": 38.4,
+          "id": "text-1779562618515-mxs92u",
+          "parentId": "__device_container_group__",
+          "textAlign": "left",
+          "type": "text",
+          "value": "三鲜汤底",
+          "width": 129,
+          "x": 447.6,
+          "y": 84
+        }
+      ],
+      "cornerRadius": 0,
+      "fill": "#ffffff",
+      "height": 480,
+      "id": "__device_container_group__",
+      "stroke": "#ffffff",
+      "strokeWidth": 0,
+      "type": "group",
+      "width": 800,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "stageSize": {
+    "width": 942,
+    "height": 486
+  }
+}

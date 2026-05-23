@@ -1,0 +1,138 @@
+{
+  "when": "user want what",
+  "stageElements": [
+    {
+      "children": [
+        {
+          "height": 480,
+          "id": "image-1779558892674-adp7fb",
+          "parentId": "__device_container_group__",
+          "rotation": 0,
+          "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/846df41f_20260523175318_image.png",
+          "type": "image",
+          "width": 800,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "height": 152.7,
+          "id": "image-1779558918750",
+          "parentId": "__device_container_group__",
+          "rotation": 0,
+          "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/7d44ef17_20260523175528_image.png",
+          "type": "image",
+          "width": 152.7,
+          "x": 53.9,
+          "y": 122.9
+        },
+        {
+          "height": 151.8,
+          "id": "image-1779558952121",
+          "parentId": "__device_container_group__",
+          "rotation": 0,
+          "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/dc6d232d_20260523175559_image.png",
+          "type": "image",
+          "width": 151.8,
+          "x": 224.7,
+          "y": 123.6
+        },
+        {
+          "height": 157.2,
+          "id": "image-1779558974337",
+          "parentId": "__device_container_group__",
+          "rotation": 0,
+          "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/2e3a6968_20260523175621_image.png",
+          "type": "image",
+          "width": 157.2,
+          "x": 583.6,
+          "y": 123.6
+        },
+        {
+          "height": 155.5,
+          "id": "image-1779559019607",
+          "parentId": "__device_container_group__",
+          "rotation": 0,
+          "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/44baad0d_20260523175708_image.png",
+          "type": "image",
+          "width": 155.5,
+          "x": 400,
+          "y": 123.6
+        },
+        {
+          "color": "#000000",
+          "fontFamily": "Montserrat",
+          "fontSize": 24,
+          "fontStyle": "bold",
+          "height": 28.8,
+          "id": "text-1779561705355",
+          "parentId": "__device_container_group__",
+          "textAlign": "left",
+          "type": "text",
+          "value": "五指毛桃",
+          "width": 96,
+          "x": 82.3,
+          "y": 280.8
+        },
+        {
+          "color": "#000000",
+          "fontFamily": "Montserrat",
+          "fontSize": 24,
+          "fontStyle": "bold",
+          "height": 28.8,
+          "id": "text-1779561793989-opg74g",
+          "parentId": "__device_container_group__",
+          "textAlign": "left",
+          "type": "text",
+          "value": "老母鸡汤",
+          "width": 96,
+          "x": 250.6,
+          "y": 280.8
+        },
+        {
+          "color": "#000000",
+          "fontFamily": "Montserrat",
+          "fontSize": 24,
+          "fontStyle": "bold",
+          "height": 28.8,
+          "id": "text-1779561798348-n4x1x4",
+          "parentId": "__device_container_group__",
+          "textAlign": "left",
+          "type": "text",
+          "value": "阳光番茄",
+          "width": 96,
+          "x": 429.8,
+          "y": 283.1
+        },
+        {
+          "color": "#000000",
+          "fontFamily": "Montserrat",
+          "fontSize": 24,
+          "fontStyle": "bold",
+          "height": 28.8,
+          "id": "text-1779561803914-c9c636",
+          "parentId": "__device_container_group__",
+          "textAlign": "left",
+          "type": "text",
+          "value": "四川麻辣",
+          "width": 96,
+          "x": 615.2,
+          "y": 284.8
+        }
+      ],
+      "cornerRadius": 0,
+      "fill": "#ffffff",
+      "height": 480,
+      "id": "__device_container_group__",
+      "stroke": "#ffffff",
+      "strokeWidth": 0,
+      "type": "group",
+      "width": 800,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "stageSize": {
+    "width": 942,
+    "height": 486
+  }
+}
