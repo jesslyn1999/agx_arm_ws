@@ -6,9 +6,10 @@ This MVP uses Alibaba Cloud Model Studio Beijing compatible mode:
 - Model: `qwen3-omni-flash`
 - API: `chat.completions.create(..., stream=True)`
 
-It records one short microphone clip per turn, sends it as `input_audio`, then
-streams text and audio output. This is not true full-duplex realtime audio; use
-the realtime WebSocket API later for strict low-latency interruption.
+It listens to the microphone, starts recording when local voice activity is
+detected, sends the captured speech as `input_audio`, then streams text and
+audio output. This is not true full-duplex realtime audio; use the realtime
+WebSocket API later for strict low-latency interruption.
 
 ## Setup
 
@@ -38,7 +39,9 @@ tools/.venv/bin/python tools/qwen_omni_compatible_voice_mvp.py
 Options:
 
 ```bash
-tools/.venv/bin/python tools/qwen_omni_compatible_voice_mvp.py --duration-sec 5 --voice Ethan
+tools/.venv/bin/python tools/qwen_omni_compatible_voice_mvp.py --voice Ethan
+tools/.venv/bin/python tools/qwen_omni_compatible_voice_mvp.py --vad-threshold 700 --vad-silence-ms 1200
+tools/.venv/bin/python tools/qwen_omni_compatible_voice_mvp.py --manual --duration-sec 5
 tools/.venv/bin/python tools/qwen_omni_compatible_voice_mvp.py --no-play-audio
 ```
 
