@@ -4,6 +4,8 @@ controller_manager:
 
     arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
+    arm_posvel_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
     gripper_controller:
       type: joint_trajectory_controller/JointTrajectoryController
     left_hand_controller:
@@ -26,6 +28,24 @@ arm_controller:
       - joint7
     command_interfaces:
       - position
+    state_interfaces:
+      - position
+      - velocity
+
+arm_posvel_controller:
+  ros__parameters:
+    allow_nonzero_velocity_at_trajectory_end: false
+    joints:
+      - joint1
+      - joint2
+      - joint3
+      - joint4
+      - joint5
+      - joint6
+      - joint7
+    command_interfaces:
+      - position
+      - velocity
     state_interfaces:
       - position
       - velocity

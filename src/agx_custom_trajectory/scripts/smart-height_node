@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+"""
+SmartHeight node – computes IK for a height-based end-effector target
+and writes the resulting joint configuration to a CSV file.
+
+Service: smart_height (SmartHeight)
+  Input : height (float64)
+  Output: success (bool), message (string)
+
+Target end-effector position (in base_link frame):
+  x = 0.25          (tolerance ±0.02)
+  y = -0.40         (satisfies y < -0.39)
+  z = height - 1.0  (default 0.2135 when height < 1.0 m)
+"""
+import csv
+import time
+
+import rclpy
+from rclpy.node import Node
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+from sensor_msgs.msg import JointState
+from geometry_msgs.msg import PoseStamped
+from moveit_msgs.srv import GetPositionIK
+from moveit_msgs.msg import MoveItErrorCodes
+
+from agx_custom_trajectory.srv import SmartHeight
+
+JOINT_NAMES = [
+    'joint1', 'joint2', 'joint3', 'joint4',
+    'joint5', 'joint6', 'joint7',
+]
+OUTPUT_CSV = '/home/jess/Documents/repos/agx_arm_ws/data/abc.csv'
+
+# ── Target position constraints ──
+TARGET_X = 0.25
+X_TOLERANCE = 0.02
+TARGET_Y = -0.40   # satisfies y < -0.39
+DEFAULT_Z = 0.2135  # fallback when height < 1.0 m
+
+# ── Target orientation (quaternion) ──
+TARGET_QX = 0.3839
+TARGET_QY = -0.4847
+TARGET_QZ = 0.5232
+TARGET_QW = 0.5865
+
+
+class SmartHeightNode(Node):
+    def __init__(self):
+        super().__init__('smart_height')
+        cb_group = ReentrantCallbackGroup()
+
+        # ── Service ──
+        self.create_service(
+            SmartHeight, 'smart_height', self._handle_cb,
+            callback_group=cb_group,
+        )
+
+        # ── IK client ──
+        self._ik_client = self.create_client(
+            GetPositionIK, '/compute_ik',
+            callback_group=cb_group,
+        )
+
+        # ── Joint-state cache ──
+        self._joint_state = None
+        self.create_subscription(
+            JointState, '/joint_states', self._js_cb, 10,
+        )
+
+        self.get_logger().info('SmartHeight node ready')
+
+    # ── Callbacks ──────────────────────────────────────────────
+
+    def _js_cb(self, msg: JointState):
+        self._joint_state = msg
+
+    def _handle_cb(self, request, response):
+        height = request.height
+        z = (height - 1.0) if height >= 1.0 else DEFAULT_Z
+        self.get_logger().info(
+            f'smart_height called  height={height:.4f}  target z={z:.4f}'
+        )
+
+        # ── Build IK request ──
+        ik_req = GetPositionIK.Request()
+        ik = ik_req.ik_request
+        ik.group_name = 'arm'
+        ik.avoid_collisions = True
+
+        pose = PoseStamped()
+        pose.header.frame_id = 'base_link'
+        pose.header.stamp = self.get_clock().now().to_msg()
+        pose.pose.position.x = TARGET_X
+        pose.pose.position.y = TARGET_Y
+        pose.pose.position.z = z
+        pose.pose.orientation.x = TARGET_QX
+        pose.pose.orientation.y = TARGET_QY
+        pose.pose.orientation.z = TARGET_QZ
+        pose.pose.orientation.w = TARGET_QW
+        ik.pose_stamped = pose
+
+        if self._joint_state is not None:
+            ik.robot_state.joint_state = self._joint_state
+
+        ik.timeout.sec = 5
+
+        # ── Call IK service ──
+        if not self._ik_client.wait_for_service(timeout_sec=5.0):
+            response.success = False
+            response.message = '/compute_ik service not available (is MoveIt running?)'
+            self.get_logger().error(response.message)
+            return response
+
+        future = self._ik_client.call_async(ik_req)
+        while rclpy.ok() and not future.done():
+            time.sleep(0.01)
+
+        result = future.result()
+        if result is None or result.error_code.val != MoveItErrorCodes.SUCCESS:
+            code = result.error_code.val if result else 'None'
+            response.success = False
+            response.message = f'IK failed (error_code={code})'
+            self.get_logger().error(response.message)
+            return response
+
+        # ── Extract joint solution ──
+        sol = result.solution.joint_state
+        pos_map = dict(zip(sol.name, sol.position))
+        joint_values = [pos_map.get(n, 0.0) for n in JOINT_NAMES]
+
+        # ── Write CSV ──
+        with open(OUTPUT_CSV, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(JOINT_NAMES)
+            writer.writerow([f'{v:.6f}' for v in joint_values])
+
+        response.success = True
+        response.message = (
+            f'IK solution saved to {OUTPUT_CSV}  '
+            f'target=({TARGET_X}, {TARGET_Y}, {z:.4f})'
+        )
+        self.get_logger().info(response.message)
+        return response
+
+
+def main():
+    rclpy.init()
+    node = SmartHeightNode()
+    executor = MultiThreadedExecutor()
+    executor.add_node(node)
+    try:
+        executor.spin()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.try_shutdown()
+
+
+if __name__ == '__main__':
+    main()
