@@ -58,6 +58,21 @@ Install dependencies if missing:
 tools/.venv/bin/python -m pip install -r tools/requirements.txt
 ```
 
+## Startup Welcome Audio
+
+Generate the welcome WAV once:
+
+```bash
+tools/.venv/bin/python tools/generate_welcome_audio.py
+```
+
+The main program plays `tools/welcome_hidilao.wav` before it starts listening.
+Skip it when debugging:
+
+```bash
+tools/.venv/bin/python tools/qwen_omni_compatible_voice_mvp.py --no-welcome
+```
+
 ## Safety Boundary
 
 This script only validates the voice interaction loop. It does not send robot

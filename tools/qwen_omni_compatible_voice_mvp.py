@@ -34,6 +34,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 TOOLS_DIR = Path(__file__).resolve().parent
 ENV_FILE = ROOT_DIR / ".env"
 DEFAULT_PROMPT_FILE = TOOLS_DIR / "Prompt.md"
+DEFAULT_WELCOME_AUDIO = TOOLS_DIR / "welcome_hidilao.wav"
 
 DEFAULT_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 DEFAULT_MODEL = "qwen3-omni-flash"
@@ -122,6 +123,12 @@ class PcmAudioSink:
                 self.process.wait(timeout=1.0)
         if self.process.poll() is None:
             self.process.kill()
+
+
+def play_wav_file(path: Path) -> None:
+    if not path.exists():
+        raise FileNotFoundError(f"Welcome audio file not found: {path}")
+    subprocess.run(["aplay", "-q", str(path)], check=True)
 
 
 def get_audio_delta_data(audio_delta: Any) -> str | None:
@@ -336,8 +343,10 @@ def parse_args() -> argparse.Namespace:
         help="DashScope Beijing compatible-mode base URL.",
     )
     parser.add_argument("--model", default=os.getenv("DASHSCOPE_MODEL", DEFAULT_MODEL), help="Model name.")
-    parser.add_argument("--voice", default="Ethan", help="Output voice, for example Ethan, Tina, Cherry.")
+    parser.add_argument("--voice", default="Momo", help="Output voice, for example Ethan, Tina, Cherry, Momo.")
     parser.add_argument("--prompt-file", type=Path, default=DEFAULT_PROMPT_FILE, help="System prompt markdown file.")
+    parser.add_argument("--welcome-audio", type=Path, default=DEFAULT_WELCOME_AUDIO, help="Startup welcome WAV file.")
+    parser.add_argument("--no-welcome", action="store_true", help="Skip startup welcome audio playback.")
     parser.add_argument("--manual", action="store_true", help="Use Enter-to-record mode instead of automatic voice detection.")
     parser.add_argument("--duration-sec", type=int, default=4, help="Manual-mode recording duration in whole seconds.")
     parser.add_argument("--min-record-sec", type=float, default=0.7, help="Minimum automatic recording length after speech starts.")
@@ -381,6 +390,9 @@ def main() -> int:
 
     mode = "manual" if args.manual else "automatic"
     print(f"Qwen3-Omni-Flash voice MVP started in {mode} mode. Press Ctrl+C to stop.")
+    if not args.no_welcome:
+        print(f"Playing welcome audio: {args.welcome_audio}", flush=True)
+        play_wav_file(args.welcome_audio)
     try:
         while True:
             if args.manual:
