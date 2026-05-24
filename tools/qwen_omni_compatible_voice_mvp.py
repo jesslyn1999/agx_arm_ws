@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import base64
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -35,6 +36,10 @@ TOOLS_DIR = Path(__file__).resolve().parent
 ENV_FILE = ROOT_DIR / ".env"
 DEFAULT_PROMPT_FILE = TOOLS_DIR / "Prompt.md"
 DEFAULT_WELCOME_AUDIO = TOOLS_DIR / "welcome_hidilao.wav"
+DEFAULT_BIRTHDAY_AUDIO_CANDIDATES = (
+    TOOLS_DIR / "海底捞生日歌.wav",
+    TOOLS_DIR / "海底捞生日歌.mp3",
+)
 
 DEFAULT_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 DEFAULT_MODEL = "qwen3-omni-flash"
@@ -129,6 +134,33 @@ def play_wav_file(path: Path) -> None:
     if not path.exists():
         raise FileNotFoundError(f"Welcome audio file not found: {path}")
     subprocess.run(["aplay", "-q", str(path)], check=True)
+
+
+def find_default_birthday_audio() -> Path:
+    for path in DEFAULT_BIRTHDAY_AUDIO_CANDIDATES:
+        if path.exists():
+            return path
+    return DEFAULT_BIRTHDAY_AUDIO_CANDIDATES[0]
+
+
+def play_audio_file(path: Path) -> None:
+    if not path.exists():
+        raise FileNotFoundError(f"Birthday audio file not found: {path}")
+    if path.suffix.lower() == ".wav":
+        subprocess.run(["aplay", "-q", str(path)], check=True)
+        return
+
+    # MP3 playback needs a decoder; prefer command-line players if available.
+    commands = [
+        ["mpg123", "-q", str(path)],
+        ["ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", str(path)],
+        ["mpv", "--no-video", "--really-quiet", str(path)],
+    ]
+    for command in commands:
+        if shutil.which(command[0]):
+            subprocess.run(command, check=True)
+            return
+    raise RuntimeError("No MP3 player found. Install mpg123, ffmpeg/ffplay, or use a WAV birthday audio file.")
 
 
 def get_audio_delta_data(audio_delta: Any) -> str | None:
@@ -280,6 +312,49 @@ def build_user_content(audio_data_uri: str, user_prompt: str) -> list[dict[str, 
     ]
 
 
+def detect_birthday_intent(client: OpenAI, args: argparse.Namespace, wav_path: Path) -> bool:
+    prompt = (
+        "请只判断这段用户语音是否明确表达“我今天过生日”或“今天是我的生日”。"
+        "如果明确表达本人今天过生日，且不是在询问别人、否定或假设，就只回答 YES；"
+        "否则只回答 NO。"
+    )
+    completion = client.chat.completions.create(
+        model=args.model,
+        messages=[
+            {
+                "role": "user",
+                "content": build_user_content(encode_wav_data_uri(wav_path), prompt),
+            }
+        ],
+        modalities=["text"],
+        extra_body={"enable_thinking": False},
+    )
+    result = completion.choices[0].message.content or ""
+    if args.verbose:
+        print(f"[birthday intent] {result}", file=sys.stderr)
+    return result.strip().upper().startswith("YES")
+
+
+def is_order_completed_response(assistant_text: str) -> bool:
+    text = assistant_text.strip()
+    if not text:
+        return False
+
+    completion_phrases = (
+        "给您记下了",
+        "已经给您记下",
+        "我给您记下",
+        "锅底马上安排",
+        "马上安排",
+        "确认下单",
+        "下单完成",
+        "订单已经",
+        "先坐着歇",
+        "慢慢吃",
+    )
+    return any(phrase in text for phrase in completion_phrases)
+
+
 def run_one_turn(client: OpenAI, args: argparse.Namespace, messages: list[dict[str, Any]], wav_path: Path) -> str:
     try:
         messages.append(
@@ -347,6 +422,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--prompt-file", type=Path, default=DEFAULT_PROMPT_FILE, help="System prompt markdown file.")
     parser.add_argument("--welcome-audio", type=Path, default=DEFAULT_WELCOME_AUDIO, help="Startup welcome WAV file.")
     parser.add_argument("--no-welcome", action="store_true", help="Skip startup welcome audio playback.")
+    parser.add_argument("--birthday-audio", type=Path, default=find_default_birthday_audio(), help="Birthday song audio file.")
+    parser.add_argument("--no-birthday-song", action="store_true", help="Disable birthday song trigger.")
     parser.add_argument("--manual", action="store_true", help="Use Enter-to-record mode instead of automatic voice detection.")
     parser.add_argument("--duration-sec", type=int, default=4, help="Manual-mode recording duration in whole seconds.")
     parser.add_argument("--min-record-sec", type=float, default=0.7, help="Minimum automatic recording length after speech starts.")
@@ -387,6 +464,8 @@ def main() -> int:
     http_client = httpx.Client(proxy=None, trust_env=False)
     client = OpenAI(api_key=api_key, base_url=args.base_url, http_client=http_client)
     messages: list[dict[str, Any]] = [{"role": "system", "content": system_prompt}]
+    birthday_check_enabled = False
+    birthday_song_played = False
 
     mode = "manual" if args.manual else "automatic"
     print(f"Qwen3-Omni-Flash voice MVP started in {mode} mode. Press Ctrl+C to stop.")
@@ -401,7 +480,18 @@ def main() -> int:
                 wav_path = record_wav_fixed(args.duration_sec)
             else:
                 wav_path = record_wav_auto(args)
-            run_one_turn(client, args, messages, wav_path)
+            birthday_detected = False
+            if birthday_check_enabled and not birthday_song_played and not args.no_birthday_song:
+                birthday_detected = detect_birthday_intent(client, args, wav_path)
+            assistant_text = run_one_turn(client, args, messages, wav_path)
+            if birthday_detected:
+                print(f"Playing birthday audio: {args.birthday_audio}", flush=True)
+                play_audio_file(args.birthday_audio)
+                birthday_song_played = True
+            if not birthday_check_enabled and is_order_completed_response(assistant_text):
+                birthday_check_enabled = True
+                if args.verbose:
+                    print("[birthday intent enabled after order completion]", file=sys.stderr)
     except KeyboardInterrupt:
         print("\nStopped.")
         return 0
