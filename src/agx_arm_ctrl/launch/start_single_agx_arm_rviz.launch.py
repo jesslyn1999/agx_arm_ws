@@ -164,6 +164,16 @@ def generate_launch_description():
         output='screen',
     )
 
+    # trajectory player node (provides /play_trajectory and /go_home services)
+    trajectory_player_node = Node(
+        package='agx_custom_trajectory',
+        executable='trajectory_player_node',
+        name='trajectory_player',
+        namespace=LaunchConfiguration('namespace'),
+        output='screen',
+        parameters=[{'use_direct_control': True}],
+    )
+
     return LaunchDescription([
         # arguments
         log_level_arg,
@@ -187,4 +197,6 @@ def generate_launch_description():
         agx_arm_launch,
         # smart-height
         smart_height_node,
+        # trajectory player
+        trajectory_player_node,
     ])

@@ -1,0 +1,117 @@
+{
+    "info": {
+      "name": "AGX Arm Demo API",
+      "description": "REST API for controlling the AGX arm via ROS2 services",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+      {
+        "key": "BASE_URL",
+        "value": "http://localhost:3000"
+      }
+    ],
+    "item": [
+      {
+        "name": "Health",
+        "item": [
+          {
+            "name": "Health Check",
+            "request": {
+              "method": "GET",
+              "url": { "raw": "{{BASE_URL}}/health", "host": ["{{BASE_URL}}"], "path": ["health"] }
+            }
+          },
+          {
+            "name": "ROS Status",
+            "request": {
+              "method": "GET",
+              "url": { "raw": "{{BASE_URL}}/api/ros-status", "host": ["{{BASE_URL}}"], "path": ["api", "ros-status"] }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Trajectory",
+        "item": [
+          {
+            "name": "List Trajectories",
+            "request": {
+              "method": "GET",
+              "url": { "raw": "{{BASE_URL}}/api/trajectories", "host": ["{{BASE_URL}}"], "path": ["api", "trajectories"] }
+            }
+          },
+          {
+            "name": "Play Trajectory",
+            "request": {
+              "method": "POST",
+              "url": { "raw": "{{BASE_URL}}/api/play-trajectory", "host": ["{{BASE_URL}}"], "path": ["api", "play-trajectory"] },
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"file_name\": \"waypoints_to_point.csv\",\n  \"reverse\": false\n}"
+              }
+            }
+          },
+          {
+            "name": "Play Trajectory (Reverse)",
+            "request": {
+              "method": "POST",
+              "url": { "raw": "{{BASE_URL}}/api/play-trajectory", "host": ["{{BASE_URL}}"], "path": ["api", "play-trajectory"] },
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"file_name\": \"waypoints_to_point.csv\",\n  \"reverse\": true\n}"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Go Home",
+        "item": [
+          {
+            "name": "Go Home (Default Velocity)",
+            "request": {
+              "method": "POST",
+              "url": { "raw": "{{BASE_URL}}/api/go-home", "host": ["{{BASE_URL}}"], "path": ["api", "go-home"] },
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": {
+                "mode": "raw",
+                "raw": "{}"
+              }
+            }
+          },
+          {
+            "name": "Go Home (Custom Velocity)",
+            "request": {
+              "method": "POST",
+              "url": { "raw": "{{BASE_URL}}/api/go-home", "host": ["{{BASE_URL}}"], "path": ["api", "go-home"] },
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"velocity\": 0.1\n}"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Smart Height",
+        "item": [
+          {
+            "name": "Set Smart Height",
+            "request": {
+              "method": "POST",
+              "url": { "raw": "{{BASE_URL}}/api/smart-height", "host": ["{{BASE_URL}}"], "path": ["api", "smart-height"] },
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"height\": 1.5\n}"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  }
+  
