@@ -1,0 +1,218 @@
+#!/usr/bin/env python3
+import csv
+import time
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import JointState
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from builtin_interfaces.msg import Duration
+
+from agx_custom_trajectory.srv import PlayTrajectory, GoHome
+
+JOINT_NAMES = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6', 'joint7']
+WAYPOINT_DT = 0.05  # seconds between waypoints
+
+
+class TrajectoryPlayer(Node):
+    def __init__(self):
+        super().__init__('trajectory_player')
+
+        self.declare_parameter('controller_name', 'arm_posvel_controller')
+        self.declare_parameter('use_direct_control', False)
+
+        controller = self.get_parameter('controller_name').value
+        self._direct = self.get_parameter('use_direct_control').value
+
+        # ── Publishers ──
+        if self._direct:
+            # Real arm: publish JointState to control/joint_states
+            self._direct_pub = self.create_publisher(
+                JointState, 'control/joint_states', 10
+            )
+        else:
+            # Simulation: publish JointTrajectory to the controller topic
+            self._traj_pub = self.create_publisher(
+                JointTrajectory,
+                f'/{controller}/joint_trajectory',
+                10,
+            )
+
+        # ── Joint state subscriber ──
+        self._joint_state = None
+        js_topic = '/joint_states' if not self._direct else 'feedback/joint_states'
+        self._joint_sub = self.create_subscription(
+            JointState, js_topic, self._joint_state_cb, 10
+        )
+
+        # ── Services ──
+        self._srv = self.create_service(
+            PlayTrajectory, 'play_trajectory', self._play_cb
+        )
+        self._home_srv = self.create_service(
+            GoHome, 'go_home', self._go_home_cb
+        )
+
+        mode = 'direct (real arm)' if self._direct else f'controller ({controller})'
+        self.get_logger().info(f'Trajectory player ready  mode={mode}')
+
+    # ── Callbacks ──
+
+    def _joint_state_cb(self, msg: JointState):
+        self._joint_state = msg
+
+    def _play_cb(self, request, response):
+        file_path = request.file_path
+        self.get_logger().info(
+            f'Service called  file={file_path}  reverse={request.reverse}'
+        )
+
+        # --- read CSV ---
+        try:
+            waypoints = self._read_csv(file_path)
+        except Exception as e:
+            response.success = False
+            response.message = f'Failed to read CSV: {e}'
+            self.get_logger().error(response.message)
+            return response
+
+        if not waypoints:
+            response.success = False
+            response.message = 'No waypoints in file'
+            return response
+
+        # --- reverse if requested ---
+        if request.reverse:
+            waypoints.reverse()
+
+        # --- need current joint state ---
+        if self._joint_state is None:
+            response.success = False
+            response.message = 'No joint states received yet'
+            self.get_logger().warn(response.message)
+            return response
+
+        # --- publish ---
+        if self._direct:
+            self._play_direct(waypoints)
+        else:
+            traj = self._build_trajectory(waypoints)
+            self._traj_pub.publish(traj)
+
+        duration = len(waypoints) * WAYPOINT_DT
+        response.success = True
+        response.message = (
+            f'Published {len(waypoints)} waypoints ({duration:.2f}s)'
+        )
+        self.get_logger().info(response.message)
+        return response
+
+    def _go_home_cb(self, request, response):
+        velocity = request.velocity
+        self.get_logger().info(f'go_home called  velocity={velocity:.4f} rad/s')
+
+        if velocity <= 0.0:
+            response.success = False
+            response.message = 'Velocity must be > 0'
+            return response
+
+        if self._joint_state is None:
+            response.success = False
+            response.message = 'No joint states received yet'
+            self.get_logger().warn(response.message)
+            return response
+
+        # Current positions for joints we control
+        current = self._get_current_positions()
+        max_disp = max(abs(v) for v in current.values())
+
+        if max_disp < 1e-4:
+            response.success = True
+            response.message = 'Already at home'
+            return response
+
+        # Duration determined by the joint farthest from zero
+        duration = max_disp / velocity
+        n_steps = max(int(duration / WAYPOINT_DT), 1)
+
+        # Linear interpolation from current to zero
+        waypoints = []
+        for step in range(1, n_steps + 1):
+            alpha = step / n_steps
+            waypoints.append(
+                {name: current[name] * (1.0 - alpha) for name in JOINT_NAMES}
+            )
+
+        if self._direct:
+            self._play_direct(waypoints)
+        else:
+            traj = self._build_trajectory(waypoints)
+            self._traj_pub.publish(traj)
+
+        response.success = True
+        response.message = (
+            f'Going home: {n_steps} steps, {duration:.2f}s '
+            f'(max displacement {max_disp:.4f} rad)'
+        )
+        self.get_logger().info(response.message)
+        return response
+
+    def _get_current_positions(self) -> dict:
+        """Extract current positions for JOINT_NAMES from cached joint state."""
+        pos_map = dict(zip(self._joint_state.name, self._joint_state.position))
+        return {name: pos_map.get(name, 0.0) for name in JOINT_NAMES}
+
+    # ── Direct control (real arm) ──
+
+    def _play_direct(self, waypoints: list[dict]):
+        """Stream waypoints as JointState messages at WAYPOINT_DT intervals."""
+        for i, wp in enumerate(waypoints):
+            msg = JointState()
+            msg.name = list(JOINT_NAMES)
+            msg.position = [wp[name] for name in JOINT_NAMES]
+            self._direct_pub.publish(msg)
+            if i < len(waypoints) - 1:
+                time.sleep(WAYPOINT_DT)
+
+    # ── Simulation control (ros2_control) ──
+
+    def _build_trajectory(self, waypoints: list[dict]) -> JointTrajectory:
+        traj = JointTrajectory()
+        traj.joint_names = list(JOINT_NAMES)
+
+        for i, wp in enumerate(waypoints):
+            pt = JointTrajectoryPoint()
+            pt.positions = [wp[name] for name in JOINT_NAMES]
+
+            t = (i + 1) * WAYPOINT_DT
+            pt.time_from_start = Duration(
+                sec=int(t), nanosec=int((t % 1) * 1e9)
+            )
+            traj.points.append(pt)
+
+        return traj
+
+    # ── Common helpers ──
+
+    def _read_csv(self, file_path: str) -> list[dict]:
+        """Return list of {joint_name: position_rad} dicts."""
+        waypoints = []
+        with open(file_path, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                waypoints.append(
+                    {name: float(row[name]) for name in JOINT_NAMES}
+                )
+        return waypoints
+
+
+def main():
+    rclpy.init()
+    node = TrajectoryPlayer()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

@@ -155,6 +155,15 @@ def generate_launch_description():
         }.items(),
     )
 
+    # smart-height node
+    smart_height_node = Node(
+        package='agx_custom_trajectory',
+        executable='smart-height_node',
+        name='smart_height',
+        namespace=LaunchConfiguration('namespace'),
+        output='screen',
+    )
+
     return LaunchDescription([
         # arguments
         log_level_arg,
@@ -176,4 +185,6 @@ def generate_launch_description():
         description_launch,
         # agx_arm
         agx_arm_launch,
+        # smart-height
+        smart_height_node,
     ])

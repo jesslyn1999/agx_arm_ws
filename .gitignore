@@ -16,3 +16,10 @@ __pycache__/
 
 # Editors / OS
 .DS_Store
+
+# Local secrets
+.env
+
+# Python virtual environments
+tools/.venv/
+tools/__pycache__/

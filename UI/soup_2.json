@@ -5,7 +5,7 @@
       "children": [
         {
           "height": 480,
-          "id": "image-1779559296808-o21y3z",
+          "id": "image-1779559127029-e8yyiv",
           "parentId": "__device_container_group__",
           "rotation": 0,
           "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/846df41f_20260523175318_image.png",
@@ -15,15 +15,15 @@
           "y": 0
         },
         {
-          "height": 312.1,
-          "id": "image-1779559313775-revhwk",
+          "height": 316,
+          "id": "image-1779559178394-dnkv2c",
           "parentId": "__device_container_group__",
           "rotation": 0,
-          "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/44baad0d_20260523175708_image.png",
+          "src": "https://sensecraft-hmi-api.seeed.cc/oss/images/image/55695160949521/dc6d232d_20260523175559_image.png",
           "type": "image",
-          "width": 312.1,
-          "x": 112.6,
-          "y": 84
+          "width": 316,
+          "x": 112.4,
+          "y": 88
         },
         {
           "color": "#000000",
@@ -31,14 +31,14 @@
           "fontSize": 32,
           "fontStyle": "bold",
           "height": 38.4,
-          "id": "text-1779562618515-mxs92u",
+          "id": "text-1779562558250-9ci0dl",
           "parentId": "__device_container_group__",
           "textAlign": "left",
           "type": "text",
-          "value": "三鲜汤底",
+          "value": "老母鸡汤",
           "width": 129,
-          "x": 447.6,
-          "y": 84
+          "x": 460.1,
+          "y": 88
         }
       ],
       "cornerRadius": 0,
